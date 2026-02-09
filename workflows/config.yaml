@@ -1,0 +1,16 @@
+data:
+  raw_data_path: "data/raw/BrentOilPrices.csv"
+  events_data_path: "data/oil_events.csv"
+  start_date: "2012-01-01"
+  end_date: "2022-12-31"
+
+modeling:
+  n_samples: 5000
+  n_tune: 1000
+  n_chains: 2
+  random_seed: 42
+
+dashboard:
+  host: "127.0.0.1"
+  port: 5000
+  debug: true
