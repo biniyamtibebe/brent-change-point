@@ -2,11 +2,18 @@ import pymc as pm
 import numpy as np
 import arviz as az
 import pandas as pd
+import matplotlib
 import matplotlib.pyplot as plt
 import pytensor
 
-# Disable C compiler (to silence warnings)
+# =========================
+# Configuration
+# =========================
+# Disable C compiler to silence g++ warnings
 pytensor.config.cxx = ""
+
+# Use non-interactive backend to avoid blocking on Windows
+matplotlib.use("Agg")
 
 
 class BayesianChangePointDetector:
@@ -70,14 +77,16 @@ class BayesianChangePointDetector:
 
         return summary
 
-    def plot_trace(self):
-        """Plot MCMC trace"""
+    def plot_trace(self, filename="traceplot.png"):
+        """Plot MCMC trace and save to file (non-interactive)"""
         if self.trace is None:
             raise ValueError("Model not fitted yet")
 
         az.plot_trace(self.trace)
         plt.tight_layout()
-        plt.show()
+        plt.savefig(filename)
+        plt.close()
+        print(f"Trace plot saved to {filename}")
 
     def save_trace(self, filename="brent_changepoint_trace.nc"):
         """Save posterior to NetCDF"""
@@ -111,8 +120,8 @@ class BayesianChangePointDetector:
             "posterior_probability": prob
         }
 
-    def plot_posterior(self, dates, data):
-        """Plot posterior + data with change point"""
+    def plot_posterior(self, dates, data, filename="posterior_plot.png"):
+        """Plot posterior + data with change point and save to file"""
         if self.trace is None:
             raise ValueError("Model not fitted yet")
 
@@ -148,7 +157,9 @@ class BayesianChangePointDetector:
         axes[1, 1].set_title("Posterior of Sigma")
 
         plt.tight_layout()
-        plt.show()
+        plt.savefig(filename)
+        plt.close()
+        print(f"Posterior plot saved to {filename}")
 
         return fig
 
@@ -156,13 +167,11 @@ class BayesianChangePointDetector:
 # =========================
 # Main execution
 # =========================
-
 if __name__ == "__main__":
     print("PyMC script started")
 
     # -------------------------------------------------
-    # TODO: REPLACE THIS WITH REAL BRENT DATA LOADING
-    # Example placeholder (remove in real project)
+    # Example synthetic Brent data (replace with real data)
     # -------------------------------------------------
     np.random.seed(42)
     n = 300
@@ -193,3 +202,4 @@ if __name__ == "__main__":
     detector.plot_posterior(dates, data)
 
     print("Sampling finished")
+
