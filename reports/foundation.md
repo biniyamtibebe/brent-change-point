@@ -98,7 +98,7 @@ The following 15 events were selected based on documented major impacts on Brent
 **Key Plots (save as PNG from notebook)**
 
 1. **Raw Brent Price Time Series**  
-   File: `eda_brent_price_series.png`  
+   File: `reports/figures/brent_oil_prices.png`  
    Description: Line plot showing strong volatility. Clear regimes: high ~$100+ (2012–2014), collapse 2014–2016, recovery 2017–2019, COVID crash 2020, Ukraine spike 2022.
 
 2. **Log Returns**  
@@ -106,7 +106,7 @@ The following 15 events were selected based on documented major impacts on Brent
    Description: Shows volatility clustering (high variance in 2014–16, Mar 2020, Feb–Mar 2022).
 
 3. **Rolling Volatility (30-day std of log returns)**  
-   File: `eda_rolling_volatility.png`  
+   File: `reports/figures/30_Day_Rolling_Volatility.png`  
    Description: Spikes align with major events (OPEC decisions, COVID, Ukraine invasion).
 
 **Stationarity Tests**  
