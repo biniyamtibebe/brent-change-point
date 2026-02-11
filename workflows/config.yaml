@@ -1,6 +1,6 @@
 data:
   raw_data_path: "data/raw/BrentOilPrices.csv"
-  events_data_path: "data/oil_events.csv"
+  events_data_path: "data/raw/events.csv"
   start_date: "2012-01-01"
   end_date: "2022-12-31"
 
