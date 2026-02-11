@@ -1,2 +1,9 @@
 data/raw
-.week11
+.week11/
+__pycache__/
+*.pyc
+.DS_Store
+.env
+data/*.csv
+!data/oil_events.csv
+notebooks/.ipynb_checkpoints/
