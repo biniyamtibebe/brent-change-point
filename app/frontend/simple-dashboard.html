@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brent Oil Price Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(90deg, #1a237e 0%, #283593 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .controls {
+            padding: 25px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.9em;
+        }
+        
+        input, select, button {
+            padding: 12px 18px;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #4dabf7;
+            box-shadow: 0 0 0 3px rgba(77, 171, 247, 0.2);
+        }
+        
+        button {
+            background: linear-gradient(90deg, #00b09b 0%, #96c93d 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            min-width: 120px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 14px rgba(0,0,0,0.1);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+            font-size: 1.2em;
+        }
+        
+        .charts-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+            padding: 25px;
+        }
+        
+        @media (min-width: 1200px) {
+            .charts-container {
+                grid-template-columns: 2fr 1fr;
+            }
+        }
+        
+        .chart {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            border: 1px solid #e9ecef;
+        }
+        
+        .chart-title {
+            font-size: 1.3em;
+            color: #1a237e;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .chart-container {
+            width: 100%;
+            height: 500px;
+        }
+        
+        .events-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .event-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-left: 4px solid #4dabf7;
+            border-radius: 8px;
+        }
+        
+        .event-date {
+            font-weight: 600;
+            color: #1a237e;
+            margin-bottom: 5px;
+        }
+        
+        .event-desc {
+            color: #495057;
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+        
+        .event-category {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #e3f2fd;
+            color: #1565c0;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+        
+        .stat-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 25px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏭 Brent Oil Price Analysis</h1>
+            <p class="subtitle">Bayesian Change Point Detection & Event Correlation (2012-2022)</p>
+        </header>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label for="startDate">Start Date</label>
+                <input type="date" id="startDate" value="2020-01-01">
+            </div>
+            
+            <div class="control-group">
+                <label for="endDate">End Date</label>
+                <input type="date" id="endDate" value="2022-12-31">
+            </div>
+            
+            <div class="control-group">
+                <label for="eventCategory">Event Category</label>
+                <select id="eventCategory">
+                    <option value="all">All Categories</option>
+                    <option value="Geopolitical">Geopolitical</option>
+                    <option value="OPEC">OPEC</option>
+                    <option value="Economic">Economic</option>
+                    <option value="Conflict">Conflict</option>
+                </select>
+            </div>
+            
+            <button onclick="loadData()">📊 Load Analysis</button>
+            <button onclick="detectChangePoints()">🔍 Detect Change Points</button>
+        </div>
+        
+        <div class="stat-cards">
+            <div class="stat-card">
+                <div class="stat-label">Data Points</div>
+                <div class="stat-value" id="dataPoints">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Events</div>
+                <div class="stat-value" id="eventCount">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg Price</div>
+                <div class="stat-value" id="avgPrice">$0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Volatility</div>
+                <div class="stat-value" id="volatility">0%</div>
+            </div>
+        </div>
+        
+        <div class="charts-container">
+            <div class="chart">
+                <div class="chart-title">📈 Brent Oil Prices with Events</div>
+                <div id="priceChart" class="chart-container"></div>
+            </div>
+            
+            <div class="chart">
+                <div class="chart-title">📅 Key Events Timeline</div>
+                <div id="eventsList" class="events-list">
+                    <div class="loading">Loading events...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:5000/api';
+        
+        let priceData = [];
+        let eventsData = [];
+        
+        // Format currency
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2
+            }).format(value);
+        }
+        
+        // Format percentage
+        function formatPercent(value) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'percent',
+                minimumFractionDigits: 2
+            }).format(value);
+        }
+        
+        // Load price data
+        async function loadPrices() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/prices?start_date=${startDate}&end_date=${endDate}`);
+                const data = await response.json();
+                
+                if (data.data && data.data.length > 0) {
+                    priceData = data.data;
+                    updateStatistics();
+                    renderPriceChart();
+                }
+            } catch (error) {
+                console.error('Error loading prices:', error);
+                document.getElementById('priceChart').innerHTML = '<div class="loading">Error loading data. Make sure Flask server is running.</div>';
+            }
+        }
+        
+        // Load events
+        async function loadEvents() {
+            try {
+                const response = await fetch(`${API_BASE}/events`);
+                const data = await response.json();
+                
+                if (data.events && data.events.length > 0) {
+                    eventsData = data.events;
+                    renderEventsList();
+                }
+            } catch (error) {
+                console.error('Error loading events:', error);
+            }
+        }
+        
+        // Detect change points
+        async function detectChangePoints() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/change-points`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        start_date: startDate,
+                        end_date: endDate
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.change_points) {
+                    alert(`Change point detected on: ${data.change_points.mode_date}\nProbability: ${(data.change_points.probability * 100).toFixed(1)}%`);
+                }
+            } catch (error) {
+                console.error('Error detecting change points:', error);
+                alert('Error detecting change points. Check console for details.');
+            }
+        }
+        
+        // Update statistics
+        function updateStatistics() {
+            if (priceData.length === 0) return;
+            
+            // Data points
+            document.getElementById('dataPoints').textContent = priceData.length;
+            
+            // Average price
+            const avgPrice = priceData.reduce((sum, item) => sum + item.price, 0) / priceData.length;
+            document.getElementById('avgPrice').textContent = formatCurrency(avgPrice);
+            
+            // Calculate volatility (standard deviation of returns)
+            const returns = [];
+            for (let i = 1; i < priceData.length; i++) {
+                if (priceData[i-1].price > 0) {
+                    returns.push((priceData[i].price - priceData[i-1].price) / priceData[i-1].price);
+                }
+            }
+            
+            if (returns.length > 0) {
+                const meanReturn = returns.reduce((a, b) => a + b, 0) / returns.length;
+                const variance = returns.reduce((a, b) => a + Math.pow(b - meanReturn, 2), 0) / returns.length;
+                const volatility = Math.sqrt(variance);
+                document.getElementById('volatility').textContent = formatPercent(volatility);
+            }
+            
+            // Event count
+            const eventCategory = document.getElementById('eventCategory').value;
+            let filteredEvents = eventsData;
+            if (eventCategory !== 'all') {
+                filteredEvents = eventsData.filter(event => event.category === eventCategory);
+            }
+            document.getElementById('eventCount').textContent = filteredEvents.length;
+        }
+        
+        // Render price chart
+        function renderPriceChart() {
+            const dates = priceData.map(item => item.date);
+            const prices = priceData.map(item => item.price);
+            
+            // Filter events for selected category and date range
+            const eventCategory = document.getElementById('eventCategory').value;
+            let filteredEvents = eventsData;
+            if (eventCategory !== 'all') {
+                filteredEvents = eventsData.filter(event => event.category === eventCategory);
+            }
+            
+            // Create trace for prices
+            const priceTrace = {
+                x: dates,
+                y: prices,
+                mode: 'lines',
+                name: 'Brent Price',
+                line: { color: '#1f77b4', width: 2 }
+            };
+            
+            // Create traces for events
+            const eventTraces = filteredEvents.map(event => {
+                // Find price on event date
+                const eventPrice = priceData.find(p => p.date === event.date)?.price;
+                if (!eventPrice) return null;
+                
+                return {
+                    x: [event.date],
+                    y: [eventPrice],
+                    mode: 'markers+text',
+                    name: event.category,
+                    marker: {
+                        size: 12,
+                        color: getCategoryColor(event.category),
+                        symbol: 'diamond'
+                    },
+                    text: [event.description.substring(0, 20) + '...'],
+                    textposition: 'top center',
+                    hoverinfo: 'text',
+                    hovertext: `${event.date}<br>${event.description}<br>Category: ${event.category}`,
+                    showlegend: false
+                };
+            }).filter(trace => trace !== null);
+            
+            // Combine traces
+            const allTraces = [priceTrace, ...eventTraces];
+            
+            // Layout
+            const layout = {
+                title: 'Brent Crude Oil Prices with Event Markers',
+                xaxis: { title: 'Date' },
+                yaxis: { title: 'Price (USD)' },
+                hovermode: 'closest',
+                plot_bgcolor: '#f8f9fa',
+                paper_bgcolor: '#f8f9fa',
+                showlegend: true,
+                legend: { x: 0, y: 1.2, orientation: 'h' }
+            };
+            
+            Plotly.newPlot('priceChart', allTraces, layout);
+        }
+        
+        // Render events list
+        function renderEventsList() {
+            const eventsList = document.getElementById('eventsList');
+            const eventCategory = document.getElementById('eventCategory').value;
+            
+            let filteredEvents = eventsData;
+            if (eventCategory !== 'all') {
+                filteredEvents = eventsData.filter(event => event.category === eventCategory);
+            }
+            
+            if (filteredEvents.length === 0) {
+                eventsList.innerHTML = '<div class="loading">No events found for selected category.</div>';
+                return;
+            }
+            
+            eventsList.innerHTML = filteredEvents.map(event => `
+                <div class="event-item">
+                    <div class="event-date">📅 ${event.date}</div>
+                    <div class="event-desc">${event.description}</div>
+                    <span class="event-category">${event.category}</span>
+                </div>
+            `).join('');
+        }
+        
+        // Get color for event category
+        function getCategoryColor(category) {
+            const colors = {
+                'Geopolitical': '#ff6b6b',
+                'OPEC': '#4ecdc4',
+                'Economic': '#45b7d1',
+                'Conflict': '#96ceb4',
+                'Sanctions': '#feca57',
+                'Logistics': '#ff9ff3'
+            };
+            return colors[category] || '#999999';
+        }
+        
+        // Load all data
+        function loadData() {
+            loadPrices();
+            loadEvents();
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            
+            // Add event listeners
+            document.getElementById('eventCategory').addEventListener('change', function() {
+                renderEventsList();
+                if (priceData.length > 0) {
+                    renderPriceChart();
+                }
+                updateStatistics();
+            });
+        });
+    </script>
+</body>
+</html>
