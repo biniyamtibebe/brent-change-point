@@ -228,6 +228,8 @@ GET /api/volatility?window=30
 - **Event Filter**: Filter by category (Geopolitical, OPEC, Economic)
 - **Model Controls**: Adjust Bayesian priors and sampling parameters
 - **Export Options**: Download plots and results as PDF/CSV
+ 
+   like:file: ///C:/Users/hp/Pictures/brent-change-point/brent-change-point/app/frontend/simple-dashboard.html
 
 ## 📝 Report Contents
 
