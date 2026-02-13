@@ -63,9 +63,8 @@ def load_and_merge_events(oil_df, events_path):
     merged_df = oil_df.copy()
     
     # Add event markers
-    merged_df['event'] = 0
-    merged_df['event_description'] = ''
-    merged_df['event_category'] = ''
+    event_col = next((col for col in event.index if 'event' in col.lower() and 'desc' in col.lower()), 'Event_Description')
+    merged_df.loc[closest_date, 'event_description'] = event[event_col]
     
     for _, event in events_df.iterrows():
         # Find closest trading day to event date
